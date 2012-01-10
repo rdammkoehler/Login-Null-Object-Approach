@@ -7,6 +7,14 @@ module Scratch
       @authorizer.authenticate(usr).with(pwd).go :home
     end
   end
+  class ProfileController
+    def initialize authorizer
+      @authorizer = authorizer
+    end
+    def visit usr, pwd
+      @authorizer.authenticate(usr).with(pwd).go :settings
+    end
+  end
   class Authorizer
     def initialize repository
       @repository = repository
@@ -92,6 +100,10 @@ routes = ::Scratch::Routes.new routes_table
 repo = ::Scratch::AuthRepository.new users, routes
 authorizer = ::Scratch::Authorizer.new repo
 lc = ::Scratch::LoginController.new authorizer
+pc = ::Scratch::ProfileController.new authorizer
 
 path = lc.login USER, PASSWORD
 puts "redirect to #{path} after login"
+
+path = pc.visit USER, PASSWORD
+puts "redirect to #{path} after ProfileController.visit"
