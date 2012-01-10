@@ -41,16 +41,16 @@ module Scratch
   end
   class AuthenticationToken
     def initialize authentication_values, routes
-      @auth_vals = authentication_values
-      @routes = routes
+      @auth_map = Hash.new
+      @auth_map.default = get_forbidden_default_routes
+      authentication_values.each { |auth_val| @auth_map[auth_val] = get_forbidden_default_routes.merge(routes) }
     end
     def with validation
-      routes = Hash.new
-      routes.default = "/403-forbidden.html"
-      if @auth_vals.include? validation   #using a hash here we can possibly eliminate the if using a hash default;-0
-        routes.merge! @routes
-      end
-      Router.new routes
+      Router.new @auth_map[validation]
+    end
+    private 
+    def get_forbidden_default_routes
+      @@forbidden_default_routes ||= lambda { h = Hash.new; h.default = "/403-forbidden.html"; h }.call
     end
   end
   class Router
@@ -107,3 +107,6 @@ puts "redirect to #{path} after login"
 
 path = pc.visit USER, PASSWORD
 puts "redirect to #{path} after ProfileController.visit"
+
+path = authorizer.authenticate(USER).with(PASSWORD).go :non_existent
+puts "redirect to #{path} for :non_existent"
